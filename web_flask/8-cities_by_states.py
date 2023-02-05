@@ -1,32 +1,30 @@
 #!/usr/bin/python3
-"""
-/states_list: display a HTML page: (inside the tag BODY)
+"""Starts a Flask web application.
+The application listens on 0.0.0.0, port 5000.
+Routes:
+    /cities_by_states: HTML page with a list of all states and related cities.
 """
 from models import storage
-from models.state import State
-from flask import Flask, render_template
+from flask import Flask
+from flask import render_template
 
 app = Flask(__name__)
-app.url_map.strict_slashes = False
+
+
+@app.route("/cities_by_states", strict_slashes=False)
+def cities_by_states():
+    """Displays an HTML page with a list of all states and related cities.
+    States/cities are sorted by name.
+    """
+    states = storage.all("State")
+    return render_template("8-cities_by_states.html", states=states)
 
 
 @app.teardown_appcontext
-def close_context(exception):
+def teardown(exc):
+    """Remove the current SQLAlchemy session."""
     storage.close()
 
 
-@app.route('/cities_by_states')
-def state_route():
-    states = storage.all(State)
-    all_states = []
-
-    for state in states.values():
-        cities = state.cities
-        city_list = list(filter(lambda c: c.state_id == state.id, cities))
-        city_data = list(map(lambda c: [c.id, c.name], city_list))
-        all_states.append([state.id, state.name, city_data])
-    return render_template('8-cities_by_states.html', states=all_states)
-
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0")
